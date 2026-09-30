@@ -97,6 +97,11 @@ class Wsb_Hub3 {
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wsb-hub3-i18n.php';
 
 		/**
+		 * The class responsible for storing generated barcodes and slips.
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wsb-hub3-files.php';
+
+		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-wsb-hub3-admin.php';
@@ -129,7 +134,7 @@ class Wsb_Hub3 {
 
 		$plugin_i18n = new Wsb_Hub3_i18n();
 
-		$this->loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
+		$this->loader->add_action( 'init', $plugin_i18n, 'load_plugin_textdomain' );
 
 	}
 
@@ -151,6 +156,8 @@ class Wsb_Hub3 {
 		$this->loader->add_action( 'woocommerce_settings_wsb_hub3_admin_tab', $plugin_admin, 'wsb_hub3_output_settings'  );
 		$this->loader->add_action( 'woocommerce_settings_save_wsb_hub3_admin_tab', $plugin_admin, 'wsb_hub3_save' );
 		$this->loader->add_action( 'admin_notices', $plugin_admin, 'wsb_hub3_notice' );
+		$this->loader->add_action( 'wp_ajax_wsb_hub3_reference_preview', $plugin_admin, 'wsb_hub3_reference_preview' );
+		$this->loader->add_action( 'admin_init', $plugin_admin, 'wsb_hub3_migrate_files' );
 		
 
 	}
@@ -175,6 +182,12 @@ class Wsb_Hub3 {
 		$this->loader->add_action( 'woocommerce_update_order', $plugin_public, 'wsb_hub3_admin_order_update', 25, 2 );
 		$this->loader->add_filter( 'woocommerce_gateway_description', $plugin_public, 'wsb_hub3_gateway_description', 25, 2 );
 		$this->loader->add_filter( 'woocommerce_bacs_account_fields', $plugin_public, 'wsb_remove_bank_details', 10, 2 );
+		$this->loader->add_action( 'phpmailer_init', $plugin_public, 'wsb_hub3_embed_email_images' );
+		$this->loader->add_filter( 'wsb_hub3_order_images', $plugin_public, 'ensure_images' );
+		$this->loader->add_filter( 'woocommerce_bacs_accounts', $plugin_public, 'wsb_hub3_mark_chosen_account', 10, 2 );
+		$this->loader->add_action( 'woocommerce_blocks_loaded', $plugin_public, 'wsb_hub3_register_store_api_data' );
+		$this->loader->add_action( 'woocommerce_blocks_checkout_block_registration', $plugin_public, 'wsb_hub3_register_checkout_block' );
+		$this->loader->add_action( 'woocommerce_store_api_checkout_update_order_from_request', $plugin_public, 'wsb_hub3_store_api_save_iban', 10, 2 );
 	}
 
 	/**
